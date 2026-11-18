@@ -1,0 +1,327 @@
+* {
+    box-sizing: border-box;
+}
+html {
+    scroll-behavior: smooth;
+}
+body {
+    margin: 0;
+    background: #070b18;
+    color: #f3f5ff;
+    font-family: Arial, sans-serif;
+}
+a {
+    text-decoration: none;
+}
+.header {
+    background: #0b1224;
+    padding: 22px 7%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #26324d;
+}
+.logo {
+    color: white;
+    font-size: 25px;
+    font-weight: bold;
+    letter-spacing: 3px;
+}
+.logo span, h2 span, .footer span {
+    color: #70e2ed;
+}
+.nav a {
+    color: #c5cde0;
+    margin-left: 28px;
+    font-size: 14px;
+}
+.nav a:hover {
+    color: #70e2ed;
+}
+.hero {
+    min-height: 590px;
+    padding: 70px 8%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: radial-gradient(circle at 75% 45%, #182b53, #070b18 48%);
+}
+.hero-text {
+    width: 48%;
+}
+.tag {
+    color: #70e2ed;
+    font-size: 11px;
+    letter-spacing: 3px;
+}
+h1 {
+    font-size: 58px;
+    line-height: 1.08;
+    margin: 20px 0;
+}
+h1 span {
+    color: #9c9aff;
+}
+.hero-text > p:not(.tag), .intro {
+    color: #aab6ce;
+    line-height: 1.8;
+}
+.main-button {
+    display: inline-block;
+    background: #70e2ed;
+    color: #07101e;
+    border: 0;
+    padding: 14px 20px;
+    margin-top: 15px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.stats {
+    display: flex;
+    gap: 45px;
+    margin-top: 45px;
+}
+.stats h2 {
+    margin-bottom: 5px;
+}
+.stats p {
+    color: #8c9bb8;
+    font-size: 10px;
+    letter-spacing: 2px;
+}
+.space-art {
+    width: 42%;
+    height: 390px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hero-planet {
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 25%, #d7c2ad, #6b719b 48%, #172344 75%);
+    box-shadow: 20px 20px 65px #000, 0 0 70px #7186e855;
+    z-index: 2;
+}
+.orbit {
+    position: absolute;
+    width: 430px;
+    height: 150px;
+    border: 1px solid #8eaeef66;
+    border-radius: 50%;
+    transform: rotate(-25deg);
+}
+.orbit-two {
+    width: 470px;
+    height: 190px;
+    transform: rotate(30deg);
+}
+.hero-moon {
+    position: absolute;
+    top: 55px;
+    right: 40px;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #d9e3f2;
+}
+.section {
+    padding: 85px 8%;
+}
+.section h2 {
+    font-size: 42px;
+    margin: 12px 0;
+}
+.search-area {
+    margin: 25px 0;
+}
+.search-area input {
+    background: #111b31;
+    border: 1px solid #34425f;
+    color: white;
+    padding: 12px;
+    width: 240px;
+}
+.search-area button, #answers button {
+    background: #111b31;
+    color: #cbd5ea;
+    border: 1px solid #34425f;
+    padding: 12px 17px;
+    margin: 4px;
+    cursor: pointer;
+}
+.search-area button:hover, #answers button:hover {
+    border-color: #70e2ed;
+    color: #70e2ed;
+}
+.planet-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+.planet-card {
+    background: #10192d;
+    border: 1px solid #263550;
+    padding: 22px;
+    cursor: pointer;
+}
+.planet-card:hover {
+    border-color: #70e2ed;
+    background: #15233d;
+}
+.planet-card p {
+    color: #93a3c1;
+    font-size: 11px;
+}
+.planet-card h3 {
+    font-size: 20px;
+    margin: 8px 0;
+}
+.planet {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    box-shadow: inset -12px -10px 20px #0008, 0 0 20px #fff2;
+}
+.mercury { background: #9b938d; }
+.venus { background: #d99a58; }
+.earth { background: #278ac7; }
+.mars { background: #b74c36; }
+.jupiter { background: repeating-linear-gradient(#c99d79 0 8px, #ead0a7 9px 15px, #8c6254 16px 20px); }
+.saturn { background: #c6a36b; border: 8px solid #907b5e; }
+.uranus { background: #83c8d2; }
+.neptune { background: #3159c9; }
+.planet-info {
+    margin-top: 28px;
+    padding: 28px;
+    background: #111b31;
+    border: 1px solid #263550;
+}
+.planet-info table {
+    width: 100%;
+    text-align: left;
+    margin-top: 25px;
+    border-collapse: collapse;
+}
+.planet-info th, .planet-info td {
+    padding: 12px;
+    border-bottom: 1px solid #34425f;
+}
+.planet-info th {
+    color: #70e2ed;
+    font-size: 11px;
+}
+.mission-section {
+    background: #0d1528;
+}
+.mission {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    padding: 18px 0;
+    border-bottom: 1px solid #293650;
+}
+.mission > p {
+    color: #70e2ed;
+    min-width: 55px;
+}
+.mission div {
+    flex: 1;
+}
+.mission h3 {
+    margin-bottom: 5px;
+}
+.mission div p {
+    color: #aab6ce;
+    margin-top: 5px;
+}
+.mission span {
+    color: #70e2ed;
+    font-size: 10px;
+}
+.quiz-box {
+    max-width: 650px;
+    background: #111b31;
+    padding: 30px;
+    border: 1px solid #34425f;
+    margin-top: 25px;
+}
+.quiz-box > p:first-child {
+    color: #70e2ed;
+    font-size: 11px;
+    letter-spacing: 2px;
+}
+#answers button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    margin: 10px 0;
+}
+#feedback {
+    color: #70e2ed;
+    min-height: 25px;
+}
+#submitScore {
+    margin-left: 10px;
+}
+.footer {
+    text-align: center;
+    padding: 45px 15px;
+    background: #050914;
+    color: #9aa8c3;
+}
+.footer h2 {
+    color: white;
+}
+.footer p:last-child {
+    font-size: 10px;
+    letter-spacing: 2px;
+}
+@media screen and (max-width: 800px) {
+    .hero {
+        display: block;
+    }
+    .hero-text, .space-art {
+        width: 100%;
+    }
+    .hero-text {
+        padding-top: 30px;
+    }
+    .planet-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    h1 {
+        font-size: 43px;
+    }
+}
+@media screen and (max-width: 500px) {
+    .header {
+        display: block;
+        text-align: center;
+    }
+    .nav {
+        margin-top: 18px;
+    }
+    .nav a {
+        margin: 0 8px;
+    }
+    .planet-grid {
+        grid-template-columns: 1fr;
+    }
+    .stats {
+        gap: 20px;
+    }
+    .section {
+        padding: 55px 6%;
+    }
+    .mission {
+        display: block;
+    }
+}
+
+#scoreForm {
+    display: none;
+}

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ORBIT - Explore the Universe</title>
+    <link rel="stylesheet" type="text/css" href="orbit.css">
+    <script src="orbit.js"></script>
+</head>
+<body>
+    <div class="header" id="home">
+        <a class="logo" href="#home">ORBIT<span>.</span></a>
+        <div class="nav">
+            <a href="#explore">Explore</a>
+            <a href="#missions">Missions</a>
+            <a href="#quiz">Space Quiz</a>
+        </div>
+    </div>
+
+    <div class="hero">
+        <div class="hero-text">
+            <p class="tag">YOUR GATEWAY TO THE COSMOS</p>
+            <h1>The universe is<br><span>closer than ever.</span></h1>
+            <p>Explore planets, discover distant galaxies and learn about humanity's journey into space.</p>
+            <a class="main-button" href="#explore">EXPLORE THE SOLAR SYSTEM</a>
+            <div class="stats">
+                <div><h2>8</h2><p>PLANETS</p></div>
+                <div><h2>1</h2><p>HOME PLANET</p></div>
+                <div><h2>∞</h2><p>DISCOVERIES</p></div>
+            </div>
+        </div>
+        <div class="space-art">
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="hero-planet"></div>
+            <div class="hero-moon"></div>
+        </div>
+    </div>
+
+    <div class="section" id="explore">
+        <p class="tag">01 / THE NEIGHBOURHOOD</p>
+        <h2>Explore our solar system<span>.</span></h2>
+        <p class="intro">Eight planets. One star. Countless mysteries waiting to be explored.</p>
+
+        <div class="search-area">
+            <input type="text" id="search" placeholder="Search for a planet">
+            <button onclick="showAll()">ALL</button>
+            <button onclick="showRocky()">ROCKY</button>
+            <button onclick="showGiants()">GIANTS</button>
+        </div>
+
+        <div class="planet-grid" id="planetGrid">
+            <div class="planet-card rocky" onclick="showPlanet('Mercury')"><div class="planet mercury"></div><p>01 / TERRESTRIAL</p><h3>Mercury</h3><p>The swiftest world</p></div>
+            <div class="planet-card rocky" onclick="showPlanet('Venus')"><div class="planet venus"></div><p>02 / TERRESTRIAL</p><h3>Venus</h3><p>A world of extremes</p></div>
+            <div class="planet-card rocky" onclick="showPlanet('Earth')"><div class="planet earth"></div><p>03 / TERRESTRIAL</p><h3>Earth</h3><p>Our pale blue home</p></div>
+            <div class="planet-card rocky" onclick="showPlanet('Mars')"><div class="planet mars"></div><p>04 / TERRESTRIAL</p><h3>Mars</h3><p>The red frontier</p></div>
+            <div class="planet-card giant" onclick="showPlanet('Jupiter')"><div class="planet jupiter"></div><p>05 / GAS GIANT</p><h3>Jupiter</h3><p>King of the planets</p></div>
+            <div class="planet-card giant" onclick="showPlanet('Saturn')"><div class="planet saturn"></div><p>06 / GAS GIANT</p><h3>Saturn</h3><p>The ringed wonder</p></div>
+            <div class="planet-card giant" onclick="showPlanet('Uranus')"><div class="planet uranus"></div><p>07 / ICE GIANT</p><h3>Uranus</h3><p>The tilted ice giant</p></div>
+            <div class="planet-card giant" onclick="showPlanet('Neptune')"><div class="planet neptune"></div><p>08 / ICE GIANT</p><h3>Neptune</h3><p>The distant blue world</p></div>
+        </div>
+
+        <div class="planet-info">
+            <p class="tag">PLANET FIELD NOTES</p>
+            <h3 id="planetName">Select a planet</h3>
+            <p id="planetDescription">Click any planet to discover more about it.</p>
+            <table>
+                <tr><th>TYPE</th><th>DAY LENGTH</th><th>YEAR LENGTH</th></tr>
+                <tr><td id="planetType">-</td><td id="planetDay">-</td><td id="planetYear">-</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="mission-section" id="missions">
+        <div class="section">
+            <p class="tag">02 / HUMANITY OUT THERE</p>
+            <h2>Space mission control<span>.</span></h2>
+            <p class="intro">Every mission expands the edge of what humanity knows.</p>
+            <div class="mission">
+                <p>2024</p><div><h3>Europa Clipper</h3><p>NASA spacecraft sent to study Jupiter's icy moon Europa.</p></div><span>EN ROUTE</span>
+            </div>
+            <div class="mission">
+                <p>2021</p><div><h3>James Webb Space Telescope</h3><p>A space observatory studying early galaxies, stars and distant planets.</p></div><span>OPERATING</span>
+            </div>
+            <div class="mission">
+                <p>2020</p><div><h3>Mars Perseverance Rover</h3><p>A robotic explorer studying Jezero Crater on Mars.</p></div><span>OPERATING</span>
+            </div>
+            <div class="mission">
+                <p>2018</p><div><h3>Parker Solar Probe</h3><p>A spacecraft studying the Sun and its outer atmosphere.</p></div><span>OPERATING</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="section quiz-section" id="quiz">
+        <p class="tag">03 / TEST YOUR COSMIC IQ</p>
+        <h2>How well do you know space?</h2>
+        <p class="intro">Answer these questions and check your space knowledge.</p>
+        <div class="quiz-box">
+            <p id="questionNumber">QUESTION 1 OF 3</p>
+            <h3 id="question">Which planet is known as the Red Planet?</h3>
+            <div id="answers">
+                <button onclick="checkAnswer(0)">Venus</button>
+                <button onclick="checkAnswer(1)">Mars</button>
+                <button onclick="checkAnswer(2)">Mercury</button>
+                <button onclick="checkAnswer(3)">Jupiter</button>
+            </div>
+            <p id="feedback"></p>
+            <button class="main-button" id="nextButton" onclick="nextQuestion()">NEXT QUESTION</button>
+            <form action="orbit.php" method="post" id="scoreForm">
+                <input type="hidden" name="score" id="scoreInput" value="0">
+                <input type="hidden" name="total" id="totalInput" value="3">
+                <input type="submit" class="main-button" id="submitScore" value="SAVE MY SCORE">
+            </form>
+        </div>
+    </div>
+
+    <div class="footer">
+        <h2>ORBIT<span>.</span></h2>
+        <p>Explore beyond the known. Keep looking up.</p>
+        <p>SPACE EXPLORATION • LEARN • DISCOVER</p>
+    </div>
+</body>
+</html>
