@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="orbit.css">
     <script src="orbit.js" defer></script>
 </head>
-<body>
+<body class="atlas-page">
     <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
         <defs>
             <symbol id="i-orbit" viewBox="0 0 48 42">
@@ -38,6 +38,8 @@
         </defs>
     </svg>
     <a class="skip-link" href="#main">Skip to content</a>
+    <canvas class="space-dust" id="spaceDust" aria-hidden="true"></canvas>
+    <div class="cursor-orbit" id="cursorOrbit" aria-hidden="true"><i></i></div>
     <header class="masthead">
         <div class="shell header-inner">
             <a class="brand" href="#home" aria-label="ORBIT home">
@@ -59,7 +61,7 @@
     </header>
     <main id="main">
         <section class="hero" id="home" aria-label="Planetary observatory">
-            <canvas class="sky" id="starfield" aria-hidden="true"></canvas>
+            <div class="deep-sky" aria-hidden="true"><canvas class="sky" id="starfield"></canvas></div>
             <div class="shell hero-inner">
                 <div class="hero-copy">
                     <p class="eyebrow focus-label"><span class="signal-dot" aria-hidden="true"></span> Solar system atlas</p>
@@ -70,13 +72,45 @@
                     <a class="action primary" id="exploreFeature" href="https://science.nasa.gov/saturn/"><span>Explore Saturn</span><svg class="icon"><use href="#i-arrow"/></svg></a>
                 </div>
                 <div class="viewport" id="viewport">
+                    <svg class="survey-track" viewBox="0 0 700 400" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                        <defs>
+                            <linearGradient id="trackLight"><stop stop-color="#82aaf0" stop-opacity=".04"/><stop offset=".32" stop-color="#9ac7dc" stop-opacity=".44"/><stop offset="1" stop-color="#a291dc" stop-opacity=".06"/></linearGradient>
+                            <radialGradient id="moonLight" cx="27%" cy="22%" r="80%"><stop stop-color="#dce5eb"/><stop offset=".48" stop-color="#9aa4af"/><stop offset="1" stop-color="#303142"/></radialGradient>
+                        </defs>
+                        <path id="transitPath" d="M-65 237C-28 382 298 340 553 180S782 -24 765 -62" fill="none" stroke="url(#trackLight)" stroke-width=".8" vector-effect="non-scaling-stroke"/>
+                        <circle class="survey-moon" r="3.2" fill="url(#moonLight)"/>
+                    </svg>
                     <div class="view-switch requires-js" role="group" aria-label="Observatory view">
                         <button type="button" id="portraitMode" aria-pressed="true"><svg class="icon"><use href="#i-globe"/></svg>Planet view</button>
                         <button type="button" id="mapMode" aria-pressed="false"><svg class="icon"><use href="#i-map"/></svg>Orbit map</button>
                     </div>
-                    <div class="portrait-stage" id="portraitStage" tabindex="0" role="group" aria-label="Planet illustration. Drag or use the left and right arrow keys to rotate." title="Drag or use the arrow keys to rotate">
+                    <div class="portrait-stage" id="portraitStage" data-world="5" tabindex="0" role="group" aria-label="Planet illustration. Drag or use the left and right arrow keys to rotate." title="Drag or use the arrow keys to rotate">
                         <div class="model-float">
-                            <div class="planet-fallback" aria-hidden="true"></div>
+                            <svg class="planet-fallback" viewBox="0 0 468 239" aria-hidden="true" focusable="false">
+                                <defs>
+                                    <linearGradient id="standInBands" x2="0" y2="1" gradientUnits="objectBoundingBox">
+                                        <stop stop-color="#9daab1"/><stop offset=".19" stop-color="#c4b69b"/><stop offset=".35" stop-color="#deccaa"/>
+                                        <stop offset=".43" stop-color="#c1a888"/><stop offset=".5" stop-color="#ead6b2"/><stop offset=".62" stop-color="#cab18f"/><stop offset="1" stop-color="#897c81"/>
+                                    </linearGradient>
+                                    <radialGradient id="standInNight" cx=".18" cy=".15" r=".86"><stop stop-color="#fff2cc" stop-opacity=".12"/><stop offset=".45" stop-color="#463b47" stop-opacity=".08"/><stop offset=".76" stop-color="#201f2d" stop-opacity=".66"/><stop offset="1" stop-color="#101321" stop-opacity=".98"/></radialGradient>
+                                    <linearGradient id="standInIce"><stop stop-color="#d9ccba"/><stop offset=".45" stop-color="#bfad99"/><stop offset="1" stop-color="#8f8384"/></linearGradient>
+                                    <g id="standInRings" fill="none">
+                                        <ellipse rx="144" ry="40" stroke="#9e93a0" stroke-opacity=".35" stroke-width="7"/>
+                                        <ellipse rx="175" ry="50" stroke="url(#standInIce)" stroke-width="13"/>
+                                        <ellipse rx="182" ry="52" stroke="#eee2c9" stroke-width="2"/>
+                                        <ellipse rx="192" ry="55" stroke="#b6a692" stroke-width="3"/>
+                                        <ellipse rx="210" ry="60" stroke="url(#standInIce)" stroke-width="7"/>
+                                        <ellipse rx="222" ry="63.5" stroke="#b5a79d" stroke-width="2"/>
+                                    </g>
+                                    <clipPath id="standInFront"><rect x="-234" width="468" height="120"/></clipPath>
+                                </defs>
+                                <g transform="translate(234 119.5) rotate(-19.5)">
+                                    <use href="#standInRings"/>
+                                    <ellipse rx="100" ry="91.5" fill="url(#standInBands)"/>
+                                    <ellipse rx="100" ry="91.5" fill="url(#standInNight)"/>
+                                    <use href="#standInRings" clip-path="url(#standInFront)"/>
+                                </g>
+                            </svg>
                             <canvas id="heroModel" class="hero-model" role="img" aria-label="Illustrated view of Saturn and its rings"></canvas>
                             <div class="figure-label" aria-hidden="true"><b></b><span id="figureLabel">A ring</span></div>
                         </div>
@@ -114,61 +148,77 @@
                     <div class="index-controls requires-js">
                         <label class="search-box"><svg class="icon"><use href="#i-search"/></svg><input type="search" id="search" placeholder="Find a planet" aria-label="Find a planet" autocomplete="off"></label>
                         <div class="filters" role="group" aria-label="Filter planets by class">
-                            <button type="button" data-filter="all" aria-pressed="true">All</button>
-                            <button type="button" data-filter="rocky" aria-pressed="false">Rocky</button>
-                            <button type="button" data-filter="giant" aria-pressed="false">Giants</button>
+                            <button type="button" data-filter="all" aria-pressed="true"><span>All</span></button>
+                            <button type="button" data-filter="rocky" aria-pressed="false"><span>Rocky</span></button>
+                            <button type="button" data-filter="giant" aria-pressed="false"><span>Giants</span></button>
                         </div>
                     </div>
                 </div>
                 <p class="sr-only" id="filterStatus" aria-live="polite"></p>
                 <div class="planet-grid" id="planetGrid">
                     <a class="planet-card" data-world="0" href="https://science.nasa.gov/mercury/">
-                        <span class="card-code">SOL / 01</span>
-                        <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
-                        <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
-                        <div class="card-caption"><h3>Mercury</h3><span>Terrestrial</span></div>
+                        <div class="card-face">
+                            <span class="card-code">SOL / 01</span>
+                            <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
+                            <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
+                            <div class="card-caption"><h3>Mercury</h3><span>Terrestrial</span></div>
+                        </div>
                     </a>
                     <a class="planet-card" data-world="1" href="https://science.nasa.gov/venus/">
-                        <span class="card-code">SOL / 02</span>
-                        <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
-                        <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
-                        <div class="card-caption"><h3>Venus</h3><span>Terrestrial</span></div>
+                        <div class="card-face">
+                            <span class="card-code">SOL / 02</span>
+                            <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
+                            <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
+                            <div class="card-caption"><h3>Venus</h3><span>Terrestrial</span></div>
+                        </div>
                     </a>
                     <a class="planet-card" data-world="2" href="https://science.nasa.gov/earth/">
-                        <span class="card-code">SOL / 03</span>
-                        <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
-                        <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
-                        <div class="card-caption"><h3>Earth</h3><span>Terrestrial</span></div>
+                        <div class="card-face">
+                            <span class="card-code">SOL / 03</span>
+                            <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
+                            <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
+                            <div class="card-caption"><h3>Earth</h3><span>Terrestrial</span></div>
+                        </div>
                     </a>
                     <a class="planet-card" data-world="3" href="https://science.nasa.gov/mars/">
-                        <span class="card-code">SOL / 04</span>
-                        <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
-                        <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
-                        <div class="card-caption"><h3>Mars</h3><span>Terrestrial</span></div>
+                        <div class="card-face">
+                            <span class="card-code">SOL / 04</span>
+                            <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
+                            <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
+                            <div class="card-caption"><h3>Mars</h3><span>Terrestrial</span></div>
+                        </div>
                     </a>
                     <a class="planet-card" data-world="4" href="https://science.nasa.gov/jupiter/">
-                        <span class="card-code">SOL / 05</span>
-                        <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
-                        <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
-                        <div class="card-caption"><h3>Jupiter</h3><span>Gas giant</span></div>
+                        <div class="card-face">
+                            <span class="card-code">SOL / 05</span>
+                            <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
+                            <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
+                            <div class="card-caption"><h3>Jupiter</h3><span>Gas giant</span></div>
+                        </div>
                     </a>
                     <a class="planet-card" data-world="5" href="https://science.nasa.gov/saturn/">
-                        <span class="card-code">SOL / 06</span>
-                        <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
-                        <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
-                        <div class="card-caption"><h3>Saturn</h3><span>Gas giant</span></div>
+                        <div class="card-face">
+                            <span class="card-code">SOL / 06</span>
+                            <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
+                            <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
+                            <div class="card-caption"><h3>Saturn</h3><span>Gas giant</span></div>
+                        </div>
                     </a>
                     <a class="planet-card" data-world="6" href="https://science.nasa.gov/uranus/">
-                        <span class="card-code">SOL / 07</span>
-                        <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
-                        <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
-                        <div class="card-caption"><h3>Uranus</h3><span>Ice giant</span></div>
+                        <div class="card-face">
+                            <span class="card-code">SOL / 07</span>
+                            <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
+                            <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
+                            <div class="card-caption"><h3>Uranus</h3><span>Ice giant</span></div>
+                        </div>
                     </a>
                     <a class="planet-card" data-world="7" href="https://science.nasa.gov/neptune/">
-                        <span class="card-code">SOL / 08</span>
-                        <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
-                        <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
-                        <div class="card-caption"><h3>Neptune</h3><span>Ice giant</span></div>
+                        <div class="card-face">
+                            <span class="card-code">SOL / 08</span>
+                            <svg class="card-arrow icon"><use href="#i-up-right"/></svg>
+                            <span class="card-scene"><canvas aria-hidden="true"></canvas></span>
+                            <div class="card-caption"><h3>Neptune</h3><span>Ice giant</span></div>
+                        </div>
                     </a>
                 </div>
                 <div class="empty-state" id="emptyState" hidden><svg class="icon"><use href="#i-search"/></svg><h3>No matching planets</h3><p>Try another name or planet class.</p><button class="text-button" type="button" id="clearSearch">Reset search and filters</button></div>
@@ -242,6 +292,19 @@
                     <p class="eyebrow"><span class="section-line"></span>Knowledge check</p>
                     <h2 id="quizTitle">Space quiz</h2>
                     <p class="section-intro">Three questions about the worlds you’ve explored and the galaxy we call home.</p>
+                    <svg class="quiz-eclipse" viewBox="0 0 320 122" aria-hidden="true" focusable="false">
+                        <defs>
+                            <radialGradient id="coronaLight"><stop offset=".44" stop-color="#879cf5" stop-opacity=".6"/><stop offset=".6" stop-color="#686ca3" stop-opacity=".35"/><stop offset="1" stop-color="#697edf" stop-opacity="0"/></radialGradient>
+                            <linearGradient id="eclipseLimb" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#354058"/><stop offset=".54" stop-color="#696c91"/><stop offset=".79" stop-color="#d4f6ff"/><stop offset="1" stop-color="#9eade7"/></linearGradient>
+                            <path id="eclipseTrack" d="M16 96C41 110 128 96 200 67S290 20 263 17"/>
+                        </defs>
+                        <circle class="eclipse-light" cx="130" cy="63" r="61" fill="url(#coronaLight)"/>
+                        <ellipse cx="131" cy="63" rx="133" ry="25" transform="rotate(-17 131 63)" fill="none" stroke="#6a7697" stroke-opacity=".43" stroke-dasharray="1 5"/>
+                        <circle cx="122" cy="66" r="35" fill="#0e1421" stroke="url(#eclipseLimb)" stroke-width="1.5"/>
+                        <circle cx="148" cy="43" r="2.3" fill="#e5faff"/>
+                        <use href="#eclipseTrack" fill="none" stroke="#41495f"/>
+                        <path class="eclipse-progress" d="M16 96C41 110 128 96 200 67S290 20 263 17" pathLength="1" fill="none" stroke="#b3d8f2"/>
+                    </svg>
                 </div>
                 <div class="quiz-panel">
                     <noscript><p>Enable JavaScript to take the space quiz.</p></noscript>

@@ -296,14 +296,16 @@
     function projectPlanet(canvas, index, rotatable = false) {
         const ctx = canvas.getContext("2d");
         if (!ctx) return null;
-        const bounds = canvas.getBoundingClientRect();
-        if (!bounds.width || !bounds.height) return null;
+        const width = canvas.clientWidth, height = canvas.clientHeight;
+        if (!width || !height) return null;
+        const hero = canvas.id === "heroModel";
         const ringed = index === 5, widthUnits = ringed ? 4.68 : 2.18, heightUnits = ringed ? 2.39 : 2.14;
-        const density = Math.min(window.devicePixelRatio || 1, 1.6);
-        const displayedRadius = Math.min(bounds.width / widthUnits, bounds.height / heightUnits);
-        if (canvas.id === "heroModel") {
-            const px = bounds.width / 2 + (ringed ? 1.16 : .44) * displayedRadius;
-            const py = bounds.height / 2 + (ringed ? .156 : .30) * displayedRadius;
+        const density = Math.min(window.devicePixelRatio || 1, 1.45);
+        const displayedRadius = Math.min(width / widthUnits, height / heightUnits);
+        if (hero) {
+            const compact = innerWidth <= 740;
+            const px = width / 2 + (ringed ? (compact ? -1.74 : -1.36) : .42) * displayedRadius;
+            const py = height / 2 + (ringed ? (compact ? .24 : .91) : .30) * displayedRadius;
             canvas.parentElement.style.setProperty("--feature-x", px + "px");
             canvas.parentElement.style.setProperty("--feature-y", py + "px");
         }
@@ -320,7 +322,7 @@
         const tilt = ringed ? .286 : .18, co = Math.sqrt(1 - tilt * tilt);
         const flatten = ringed ? .915 : index === 4 ? .94 : .994;
         const startLon = index === 2 ? .10 : index === 3 ? .37 : .04;
-        const lx = -.723, ly = -.504, lz = .472;
+        const lx = hero ? -.784 : -.723, ly = hero ? -.524 : -.504, lz = hero ? .332 : .472;
         const lu = lx * cos + ly * sin, lv = -lx * sin + ly * cos;
         const planeLight = -lv * co + lz * tilt;
         // Only visible surface pixels change during rotation. Keep their projection
@@ -345,7 +347,7 @@
                     const ty = clamp(Math.floor((.5 - latitude / Math.PI) * TEX_H), 0, TEX_H - 1);
                     sample = ty * TEX_W + tx;
                     const illumination = Math.max(0, u * lu + nv * lv + z * lz);
-                    light = .075 + Math.pow(illumination, .71) * .99;
+                    light = (hero ? .049 : .075) + Math.pow(illumination, .73) * 1.015;
                     if (ringed) {
                         const t = (v * co - z * tilt) / planeLight;
                         if (t > 0) {
@@ -354,17 +356,17 @@
                             if (shadowR > 1.2 && shadowR < 2.33) light *= 1 - ringTable[ringIndex(shadowR) + 3] * .61;
                         }
                     }
-                    const rim = Math.pow(1 - z, 3.25) * (.19 + .81 * illumination);
-                    const atmosphere = index === 2 || index > 5 ? 1 : index === 0 ? .16 : .49;
+                    const rim = Math.pow(1 - z, hero ? 2.8 : 3.25) * (.19 + .81 * illumination);
+                    const atmosphere = index === 2 || index > 5 ? 1 : index === 0 ? .16 : hero ? .82 : .49;
                     const t = sample * 4;
-                    red = tex[t] * light + 3 + rim * 60 * atmosphere;
+                    red = tex[t] * light + 4 + rim * 74 * atmosphere;
                     green = tex[t + 1] * light + 4 + rim * 99 * atmosphere;
-                    blue = tex[t + 2] * light + 9 + rim * 144 * atmosphere;
+                    blue = tex[t + 2] * light + (hero ? 13 : 9) + rim * 144 * atmosphere;
                     alpha = clamp((1 - Math.sqrt(radial)) * r + .5);
-                } else if (radial < 1.057 && index !== 0) {
+                } else if (radial < 1.105 && index !== 0) {
                     const edge = Math.sqrt(radial) - 1;
                     const sunward = clamp(sx * lx + sy * ly + .24);
-                    alpha = Math.exp(-edge * (index === 2 ? 145 : 230)) * sunward * .37;
+                    alpha = Math.exp(-edge * (hero ? 98 : 175)) * sunward * (hero ? .53 : .37);
                     red = index === 2 || index > 5 ? 116 : 233;
                     green = index === 2 || index > 5 ? 181 : 207; blue = 213;
                 }
@@ -383,7 +385,7 @@
                         const towardsLight = u * lu + v * lv + rz * lz;
                         const near = u * u + v * v + rz * rz - towardsLight * towardsLight;
                         const shadow = towardsLight < 0 ? smooth(clamp((1.055 - near) / .14)) : 0;
-                        const brightness = (.98 - .095 * u / rr) * (1 - shadow * .82);
+                        const brightness = (.98 - (hero ? .17 : .095) * u / rr) * (1 - shadow * .84);
                         const combined = a + alpha * (1 - a);
                         const body = combined ? alpha * (1 - a) / combined : 0;
                         const reflectance = total > 0 ? brightness / total : 0;
@@ -430,7 +432,7 @@
         if (!ctx) return;
         const { width, height } = canvas.getBoundingClientRect();
         if (!width || !height) return;
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.35, Math.sqrt(2200000 / (width * height)));
         canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         const fog = makeCanvas(Math.min(620, Math.ceil(width / 2.8)), Math.min(290, Math.ceil(height / 2.8)));
@@ -440,21 +442,22 @@
                 const u = x / fog.width, v = y / fog.height;
                 const dust = fractal(u * 6.5 + 42, v * 3.7 + 35);
                 const wisps = fractal(u * 25 + dust * 5, v * 13 + dust * 7);
-                const spine = v - (.94 - .75 * u + Math.sin(u * 5.4) * .13 + (dust - .5) * .38);
-                const ribbon = Math.exp(-spine * spine * 15);
-                const gas = ribbon * (.15 + .85 * u) * Math.pow(clamp(dust * .95 + wisps * .7 - .38), 1.9);
-                const halo = Math.exp(-((u - .76) ** 2 * 9 + (v - .49) ** 2 * 4));
+                const spine = v - (.99 - .82 * u + Math.sin(u * 6.2) * .12 + (dust - .5) * .43);
+                const ribbon = Math.exp(-spine * spine * 17);
+                const gas = ribbon * (.24 + .76 * u) * Math.pow(clamp(dust * .96 + wisps * .75 - .37), 1.7);
+                const halo = Math.exp(-((u - .70) ** 2 * 11 + (v - .44) ** 2 * 5));
+                const blueCloud = Math.exp(-((u - .48) ** 2 * 18 + (v - .70) ** 2 * 9)) * dust;
                 const i = (y * fog.width + x) * 4;
-                image.data[i] = 6 + gas * 72 + halo * 4;
-                image.data[i + 1] = 9 + gas * 57 + halo * 5;
-                image.data[i + 2] = 17 + gas * 103 + halo * 12;
+                image.data[i] = 5 + gas * 83 + halo * 6 + blueCloud * 4;
+                image.data[i + 1] = 8 + gas * 53 + halo * 7 + blueCloud * 14;
+                image.data[i + 2] = 17 + gas * 117 + halo * 14 + blueCloud * 28;
                 image.data[i + 3] = 255;
             }
         }
         fogCtx.putImageData(image, 0, 0);
         ctx.drawImage(fog, 0, 0, width, height);
         const rand = randomSequence(241105);
-        const stars = Math.min(1900, Math.floor(width * height / 440));
+        const stars = Math.min(1450, Math.floor(width * height / 630));
         for (let i = 0; i < stars; i++) {
             const x = rand() * width, y = rand() * height;
             const luminous = rand(), size = .21 + luminous ** 5 * 1.12;
@@ -520,21 +523,234 @@
     let spin = 0, turnHero = null, heroVisible = true;
     let frame = 0, lastTime = 0, lastPaint = 0, draggingHero = false;
     const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
-    let moving = !reducedMotion.matches;
+    const finePointer = matchMedia("(hover: hover) and (pointer: fine)");
+    const forcedColors = matchMedia("(forced-colors: active)");
+    const lifetime = new AbortController();
+    const observers = [];
+    let moving = !reducedMotion.matches, pageActive = true, mainVisible = true;
     const dialog = $("#fieldNotes");
     let noted = 5, noteSpin = 0, turnNote = null, noteOpener = null;
     const portraitRequests = new WeakMap();
+
+    function listen(target, type, handler, options = {}) {
+        target.addEventListener(type, handler, { ...options, signal: lifetime.signal });
+    }
+    function canDecorate() {
+        return moving && !reducedMotion.matches && !forcedColors.matches;
+    }
+
+    function createPointerEffects() {
+        const halo = $("#cursorOrbit");
+        const pointer = { active: false, x: 0, y: 0 };
+        const buttons = ".action, .icon-button, .sound-control, .filters button, .view-switch button";
+        const interactive = "a, button, summary, [tabindex='0']";
+        let target = null, bounds = null, card = false, dirty = false;
+        let haloX = 0, haloY = 0, wave = null;
+
+        function releaseTarget() {
+            if (!target) return;
+            target.classList.remove("is-aimed");
+            for (const name of ["--tilt-x", "--tilt-y", "--hot-x", "--hot-y", "--mag-x", "--mag-y"]) {
+                target.style.removeProperty(name);
+            }
+            target = bounds = null;
+        }
+        function reset() {
+            pointer.active = false; dirty = false;
+            halo.classList.remove("is-visible", "is-engaged");
+            releaseTarget();
+        }
+        function track(event) {
+            if (!(event.target instanceof Element)) return;
+            if (!canDecorate() || !finePointer.matches || event.pointerType === "touch" ||
+                !pageActive || document.hidden || dialog.open || event.target.closest("input, textarea, [contenteditable='true']")) {
+                if (pointer.active) reset();
+                return;
+            }
+            pointer.x = event.clientX; pointer.y = event.clientY;
+            if (!pointer.active) {
+                haloX = pointer.x; haloY = pointer.y;
+                halo.style.transform = "translate3d(" + haloX + "px," + haloY + "px,0)";
+                pointer.active = true; halo.classList.add("is-visible");
+                syncAnimation();
+            }
+            const hit = event.target.closest(interactive);
+            const enabled = hit && !hit.matches(":disabled, [aria-disabled='true']");
+            halo.classList.toggle("is-engaged", Boolean(enabled));
+            const face = enabled && hit.matches(".planet-card, " + buttons) ? hit : null;
+            if (face !== target) {
+                releaseTarget(); target = face;
+                if (target) {
+                    bounds = target.getBoundingClientRect();
+                    card = target.classList.contains("planet-card");
+                    if (card) target.classList.add("is-aimed");
+                }
+            }
+            dirty = true;
+        }
+        function update(elapsed) {
+            if (!pointer.active) return;
+            const follow = 1 - Math.exp(-elapsed * 23);
+            if (Math.abs(haloX - pointer.x) + Math.abs(haloY - pointer.y) > .12) {
+                haloX = lerp(haloX, pointer.x, follow); haloY = lerp(haloY, pointer.y, follow);
+                halo.style.transform = "translate3d(" + haloX.toFixed(2) + "px," + haloY.toFixed(2) + "px,0)";
+            }
+            if (!dirty || !target || !bounds) return;
+            dirty = false;
+            const x = clamp((pointer.x - bounds.left) / Math.max(1, bounds.width));
+            const y = clamp((pointer.y - bounds.top) / Math.max(1, bounds.height));
+            if (card) {
+                target.style.setProperty("--hot-x", (x * 100).toFixed(1) + "%");
+                target.style.setProperty("--hot-y", (y * 100).toFixed(1) + "%");
+                target.style.setProperty("--tilt-x", ((.5 - y) * 4.6).toFixed(2) + "deg");
+                target.style.setProperty("--tilt-y", ((x - .5) * 5.4).toFixed(2) + "deg");
+            } else {
+                target.style.setProperty("--mag-x", ((x - .5) * 6).toFixed(2) + "px");
+                target.style.setProperty("--mag-y", ((y - .5) * 4.6).toFixed(2) + "px");
+            }
+        }
+        function ripple(event) {
+            if (!canDecorate() || !(event.target instanceof Element)) return;
+            const control = event.target.closest(buttons + ", .answer");
+            if (!control || control.matches(":disabled, [aria-disabled='true']")) return;
+            const rect = control.getBoundingClientRect();
+            const x = event.detail ? event.clientX - rect.left : rect.width / 2;
+            const y = event.detail ? event.clientY - rect.top : rect.height / 2;
+            wave?.remove();
+            wave = document.createElement("span"); wave.className = "click-wave";
+            wave.setAttribute("aria-hidden", "true");
+            wave.style.setProperty("--wave-size", (2.1 * Math.hypot(rect.width, rect.height)) + "px");
+            wave.style.setProperty("--wave-x", x + "px"); wave.style.setProperty("--wave-y", y + "px");
+            control.append(wave);
+        }
+        listen(document, "pointermove", track, { passive: true });
+        listen(document, "pointerout", event => { if (!event.relatedTarget) reset(); }, { passive: true });
+        listen(document, "pointerdown", event => { if (event.pointerType === "touch") reset(); }, { passive: true });
+        listen(document, "pointercancel", reset);
+        listen(document, "keydown", reset);
+        listen(window, "blur", reset);
+        listen(window, "scroll", reset, { passive: true });
+        listen(document, "click", ripple, { capture: true });
+        listen(document, "animationend", event => {
+            if (event.target === wave) { wave.remove(); wave = null; }
+        });
+        return { pointer, update, reset, clear() { reset(); wave?.remove(); wave = null; } };
+    }
+
+    function createDustField(pointer) {
+        const canvas = $("#spaceDust"), ctx = canvas.getContext("2d");
+        const grains = [], trail = [];
+        const rand = randomSequence(78351);
+        let width = 0, height = 0, pixelRatio = 0, clock = 0, carry = 0;
+        let lastX = null, lastY = 0, meteor = null, untilMeteor = 9;
+        function resize() {
+            if (!ctx) return;
+            const w = canvas.clientWidth, h = canvas.clientHeight;
+            if (!w || !h) return;
+            const ratio = Math.min(devicePixelRatio || 1, finePointer.matches ? 1.35 : 1,
+                Math.sqrt(2000000 / (w * h)));
+            const count = finePointer.matches ? clamp(Math.round(w * h / 15500), 28, 76) : clamp(Math.round(w * h / 22000), 12, 23);
+            if (width === w && height === h && ratio === pixelRatio && grains.length === count) return;
+            width = w; height = h; pixelRatio = ratio;
+            canvas.width = Math.round(w * ratio); canvas.height = Math.round(h * ratio);
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            const seed = randomSequence(349019);
+            grains.length = trail.length = 0; meteor = null; lastX = null;
+            for (let i = 0; i < count; i++) {
+                grains.push({ u: seed(), v: seed(), depth: .24 + seed() * .76, phase: seed() * TAU,
+                    x: 0, y: 0, vx: 0, vy: 0, color: i % 4 ? "#a8c9e5" : "#b9abde" });
+            }
+        }
+        function clear() {
+            if (ctx) ctx.clearRect(0, 0, width, height);
+            trail.length = 0; lastX = null; meteor = null; carry = 0;
+            for (const grain of grains) grain.x = grain.y = grain.vx = grain.vy = 0;
+        }
+        function drawTrail(dt) {
+            if (pointer.active && lastX !== null) {
+                const dx = pointer.x - lastX, dy = pointer.y - lastY, distance = Math.hypot(dx, dy);
+                const count = distance < 160 ? Math.min(3, Math.floor(distance / 6)) : 0;
+                for (let i = 0; i < count; i++) {
+                    const along = (i + rand() * .7) / count;
+                    trail.push({ x: lastX + dx * along + (rand() - .5) * 3, y: lastY + dy * along,
+                        vx: (rand() - .5) * 11 - dx * .035, vy: (rand() - .5) * 12 - dy * .035,
+                        age: 0, life: .22 + rand() * .19, size: .65 + rand() * .65 });
+                }
+                if (trail.length > 16) trail.splice(0, trail.length - 16);
+            }
+            lastX = pointer.active ? pointer.x : null; lastY = pointer.y;
+            ctx.fillStyle = "#c6daff";
+            for (let i = trail.length - 1; i >= 0; i--) {
+                const p = trail[i]; p.age += dt;
+                if (p.age >= p.life) { trail.splice(i, 1); continue; }
+                p.x += p.vx * dt; p.y += p.vy * dt;
+                ctx.globalAlpha = .7 * (1 - p.age / p.life) ** 2;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.fill();
+            }
+        }
+        function drawMeteor(dt) {
+            if (!heroVisible || mapVisible) { meteor = null; return; }
+            untilMeteor -= dt;
+            if (!meteor && untilMeteor <= 0) {
+                meteor = { x: width * (.22 + rand() * .52), y: height * (.05 + rand() * .14), age: 0 };
+                untilMeteor = 22 + rand() * 19;
+            }
+            if (!meteor) return;
+            meteor.age += dt;
+            if (meteor.age >= .95) { meteor = null; return; }
+            const t = meteor.age / .95, span = Math.min(width * .19, 220);
+            const x = meteor.x + t * span, y = meteor.y + t * span * .35;
+            const length = Math.min(67, span * .4) * Math.sin(Math.PI * t);
+            const tail = ctx.createLinearGradient(x - length, y - length * .35, x, y);
+            tail.addColorStop(0, "rgba(151,179,226,0)"); tail.addColorStop(1, "#deeaff");
+            ctx.globalAlpha = .67 * Math.sin(Math.PI * t);
+            ctx.strokeStyle = tail; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x - length, y - length * .35); ctx.lineTo(x, y); ctx.stroke();
+        }
+        function paint(elapsed) {
+            if (!ctx || !width) return;
+            carry += elapsed;
+            if (carry < 1 / (finePointer.matches ? 30 : 20)) return;
+            const dt = Math.min(carry, .085); carry = 0; clock += dt;
+            ctx.clearRect(0, 0, width, height);
+            const damping = Math.exp(-dt * 8.7);
+            for (const p of grains) {
+                const spanX = width + 32, spanY = height + 32;
+                const x = (p.u * spanX + clock * (1.2 + p.depth * 3.1)) % spanX - 16;
+                const travel = p.v * spanY + clock * (.4 + p.depth) - scrollY * p.depth * .045;
+                const y = ((travel % spanY) + spanY) % spanY - 16 + Math.sin(p.phase + clock * .09) * 3;
+                const dx = pointer.x - x, dy = pointer.y - y, range = 95 + p.depth * 64;
+                const proximity = pointer.active ? clamp(1 - (dx * dx + dy * dy) / (range * range)) : 0;
+                const pull = proximity * proximity * (.29 + p.depth * .21);
+                p.vx = (p.vx + (dx * pull - p.x) * 45 * dt) * damping;
+                p.vy = (p.vy + (dy * pull - p.y) * 45 * dt) * damping;
+                p.x += p.vx * dt; p.y += p.vy * dt;
+                ctx.globalAlpha = .17 + p.depth * .31 + proximity * .22;
+                ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(x + p.x, y + p.y, .4 + p.depth * .88, 0, TAU); ctx.fill();
+            }
+            drawTrail(dt); drawMeteor(dt); ctx.globalAlpha = 1;
+        }
+        return { resize, paint, clear, supported: Boolean(ctx) };
+    }
+    const cursor = createPointerEffects();
+    const dust = createDustField(cursor.pointer);
+    let updateScroll = () => {};
 
     function preparePortrait(canvas, index, ready) {
         const request = {};
         portraitRequests.set(canvas, request);
         const draw = () => {
-            if (portraitRequests.get(canvas) !== request) return;
+            if (lifetime.signal.aborted || portraitRequests.get(canvas) !== request) return;
             ready(projectPlanet(canvas, index, true));
             canvas.classList.remove("is-loading");
         };
         const waiting = pendingTexture(index);
-        if (waiting) { canvas.classList.add("is-loading"); waiting.then(draw); }
+        if (waiting) {
+            canvas.classList.add("is-loading");
+            canvas.parentElement.classList.remove("has-model");
+            waiting.then(draw);
+        }
         else draw();
     }
     function renderHero() {
@@ -550,17 +766,24 @@
         frame = 0;
         const elapsed = lastTime ? Math.min(.15, (now - lastTime) / 1000) : 0;
         lastTime = now;
-        if (mapVisible) simulationDays += elapsed * 2.8;
-        else if (!draggingHero) spin += elapsed / 245 * (selected === 1 || selected === 6 ? -1 : 1);
-        if (now - lastPaint >= (mapVisible ? 33 : 80)) {
-            if (mapVisible) positionOrbits(simulationDays);
-            else if (turnHero) turnHero(spin);
-            lastPaint = now;
+        if (heroVisible) {
+            if (mapVisible) simulationDays += elapsed * 2.8;
+            else if (!draggingHero) spin += elapsed / 245 * (selected === 1 || selected === 6 ? -1 : 1);
+            if (now - lastPaint >= (mapVisible ? 33 : 80)) {
+                if (mapVisible) positionOrbits(simulationDays);
+                else if (turnHero) turnHero(spin);
+                lastPaint = now;
+            }
+        }
+        if (canDecorate()) {
+            cursor.update(elapsed);
+            if (mainVisible) dust.paint(elapsed);
         }
         syncAnimation();
     }
     function syncAnimation() {
-        if (moving && heroVisible && !document.hidden && !dialog.open) {
+        const fieldVisible = canDecorate() && ((mainVisible && dust.supported) || cursor.pointer.active);
+        if (pageActive && moving && !document.hidden && !dialog.open && (heroVisible || fieldVisible)) {
             if (!frame) frame = requestAnimationFrame(tick);
         } else {
             cancelAnimationFrame(frame); frame = 0; lastTime = 0;
@@ -572,7 +795,9 @@
         const button = $("#motionToggle"), label = enabled ? "Pause motion" : "Resume motion";
         button.setAttribute("aria-label", label); button.title = label;
         button.querySelector("use").setAttribute("href", enabled ? "#i-pause" : "#i-play");
-        if (!enabled) resetParallax();
+        if (canDecorate()) dust.resize();
+        else { cursor.clear(); dust.clear(); resetParallax(); }
+        updateScroll();
         syncAnimation();
     }
     function resetParallax() {
@@ -597,6 +822,7 @@
         $("#figureLabel").textContent = world.feature;
         $("#heroModel").setAttribute("aria-label", "Illustrated view of " + world.name + (selected === 5 ? " and its rings" : ""));
         $("#portraitStage").dataset.world = selected;
+        $("#viewport").classList.toggle("no-moon", selected < 2);
         spin = 0;
         if (!mapVisible) renderHero();
         orbitButtons.forEach((button, i) => {
@@ -616,6 +842,7 @@
     function setView(map) {
         if (mapVisible === map) return;
         mapVisible = map;
+        $("#viewport").classList.toggle("in-map", map);
         $("#portraitStage").hidden = map; $("#orbitMap").hidden = !map;
         $("#portraitMode").setAttribute("aria-pressed", String(!map)); $("#mapMode").setAttribute("aria-pressed", String(map));
         if (map) positionOrbits(simulationDays);
@@ -624,13 +851,13 @@
     }
     function bindRotation(element, readAngle, writeAngle, onDrag) {
         let pointer = null, startX = 0, startAngle = 0, pending = 0, value = 0;
-        element.addEventListener("pointerdown", event => {
+        listen(element, "pointerdown", event => {
             if (!event.isPrimary || event.button !== 0) return;
             pointer = event.pointerId; startX = event.clientX; startAngle = readAngle();
             element.setPointerCapture(pointer); element.classList.add("is-dragging");
             if (onDrag) onDrag(true);
         });
-        element.addEventListener("pointermove", event => {
+        listen(element, "pointermove", event => {
             if (pointer !== event.pointerId) return;
             value = startAngle - (event.clientX - startX) / Math.max(140, element.clientWidth) * .85;
             if (!pending) pending = requestAnimationFrame(() => { pending = 0; writeAngle(value); });
@@ -640,9 +867,11 @@
             pointer = null; element.classList.remove("is-dragging");
             if (onDrag) onDrag(false);
         };
-        element.addEventListener("lostpointercapture", finish);
-        element.addEventListener("pointercancel", finish);
-        element.addEventListener("keydown", event => {
+        listen(element, "pointerup", finish);
+        listen(element, "lostpointercapture", finish);
+        listen(element, "pointercancel", finish);
+        lifetime.signal.addEventListener("abort", () => cancelAnimationFrame(pending), { once: true });
+        listen(element, "keydown", event => {
             if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
             event.preventDefault(); event.stopPropagation();
             writeAngle(readAngle() + (event.key === "ArrowRight" ? .035 : -.035));
@@ -669,7 +898,8 @@
     function openNotes(event, index) {
         if (event.button > 0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || typeof dialog.showModal !== "function") return;
         event.preventDefault();
-        noteOpener = event.currentTarget; dialog.showModal(); displayNote(index); syncAnimation();
+        noteOpener = event.currentTarget; dialog.showModal(); cursor.clear(); dust.clear();
+        displayNote(index); syncAnimation();
     }
     $("#exploreFeature").addEventListener("click", event => openNotes(event, selected));
     $("#closeNotes").addEventListener("click", () => dialog.close());
@@ -684,25 +914,34 @@
 
     const cards = $$(".planet-card");
     const drawQueue = new Set();
-    function queueCard(card) {
-        if (drawQueue.has(card) || card.hidden) return;
-        const idle = window.requestIdleCallback || (callback => setTimeout(callback, 16));
-        const first = drawQueue.size === 0;
-        drawQueue.add(card);
-        if (!first) return;
-        function next() {
+    const idle = window.requestIdleCallback?.bind(window) || (callback => setTimeout(callback, 16));
+    const cancelIdle = window.cancelIdleCallback?.bind(window) || clearTimeout;
+    let cardIdle = 0, preparingCard = false;
+    function scheduleCard() {
+        if (cardIdle || preparingCard || !drawQueue.size || !pageActive || document.hidden || lifetime.signal.aborted) return;
+        cardIdle = idle(() => {
+            cardIdle = 0;
             const item = drawQueue.values().next().value;
-            if (!item) return;
+            if (!item || !pageActive || document.hidden) return;
             const index = Number(item.dataset.world);
-            const finish = () => {
-                if (!item.hidden) projectPlanet(item.querySelector("canvas"), index);
-                drawQueue.delete(item);
-                if (drawQueue.size) idle(next, { timeout: 220 });
+            const nearby = () => {
+                const rect = item.getBoundingClientRect();
+                return !item.hidden && rect.bottom > -250 && rect.top < innerHeight + 250;
             };
-            const waiting = item.hidden ? null : pendingTexture(index);
+            if (!nearby()) { drawQueue.delete(item); scheduleCard(); return; }
+            preparingCard = true;
+            const finish = () => {
+                preparingCard = false;
+                if (lifetime.signal.aborted || !pageActive || document.hidden) return;
+                if (nearby()) projectPlanet(item.querySelector("canvas"), index);
+                drawQueue.delete(item); scheduleCard();
+            };
+            const waiting = pendingTexture(index);
             if (waiting) waiting.then(finish); else finish();
-        }
-        idle(next, { timeout: 220 });
+        }, { timeout: 220 });
+    }
+    function queueCard(card) {
+        if (!card.hidden) { drawQueue.add(card); scheduleCard(); }
     }
     let category = "all";
     function applyFilters() {
@@ -729,31 +968,47 @@
     function initNavigation() {
         const nav = $("#mainNav"), toggle = $("#menuToggle"), links = Array.from(nav.querySelectorAll("a"));
         const sections = links.map(link => $(link.hash));
+        const header = $(".masthead"), missionList = $(".mission-list");
         function setMenu(open) {
             nav.classList.toggle("is-open", open); toggle.setAttribute("aria-expanded", String(open));
             toggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
             toggle.querySelector("use").setAttribute("href", open ? "#i-close" : "#i-menu");
         }
-        toggle.addEventListener("click", () => setMenu(!nav.classList.contains("is-open")));
-        links.forEach(link => link.addEventListener("click", () => setMenu(false)));
-        document.addEventListener("pointerdown", event => {
+        listen(toggle, "click", () => setMenu(!nav.classList.contains("is-open")));
+        links.forEach(link => listen(link, "click", () => setMenu(false)));
+        listen(document, "pointerdown", event => {
             if (nav.classList.contains("is-open") && !event.target.closest(".masthead")) setMenu(false);
         });
-        document.addEventListener("keydown", event => {
+        listen(document, "keydown", event => {
             if (event.key === "Escape" && nav.classList.contains("is-open")) { setMenu(false); toggle.focus(); }
         });
-        matchMedia("(min-width: 741px)").addEventListener("change", event => { if (event.matches) setMenu(false); });
-        let scheduled = false;
+        listen(matchMedia("(min-width: 741px)"), "change", event => { if (event.matches) setMenu(false); });
+        let scheduled = 0;
         function updateNav() {
-            scheduled = false;
-            const line = $(".masthead").offsetHeight + Math.min(innerHeight * .26, 160);
+            scheduled = 0;
+            const rects = sections.map(section => section.getBoundingClientRect());
+            const headerHeight = header.offsetHeight, line = headerHeight + Math.min(innerHeight * .26, 160);
             let active = 0;
-            sections.forEach((section, i) => { if (section.getBoundingClientRect().top <= line) active = i; });
+            rects.forEach((rect, i) => { if (rect.top <= line) active = i; });
             if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) active = links.length - 1;
             links.forEach((link, i) => { if (i === active) link.setAttribute("aria-current", "location"); else link.removeAttribute("aria-current"); });
+            // Two different travel distances retain depth during native scrolling.
+            const hero = rects[0];
+            if (hero.bottom > 0 || !canDecorate()) {
+                const progress = canDecorate() ? clamp((headerHeight - hero.top) / hero.height) : 0;
+                const travel = innerWidth <= 740 ? 31 : 73;
+                sections[0].style.setProperty("--planet-shift", (progress * travel).toFixed(2) + "px");
+                sections[0].style.setProperty("--sky-shift", (progress * 23).toFixed(2) + "px");
+            }
+            const mission = rects[2];
+            const flown = canDecorate() ? clamp((innerHeight * .83 - mission.top) / (mission.height * .76)) : 1;
+            missionList.style.setProperty("--mission-progress", flown.toFixed(3));
         }
-        window.addEventListener("scroll", () => { if (!scheduled) { scheduled = true; requestAnimationFrame(updateNav); } }, { passive: true });
+        function schedule() { if (pageActive && !scheduled) scheduled = requestAnimationFrame(updateNav); }
+        listen(window, "scroll", schedule, { passive: true });
+        lifetime.signal.addEventListener("abort", () => cancelAnimationFrame(scheduled), { once: true });
         updateNav();
+        return schedule;
     }
     function initSound() {
         const button = $("#soundToggle"), Audio = window.AudioContext || window.webkitAudioContext;
@@ -788,9 +1043,12 @@
                 enabled = false; button.setAttribute("aria-pressed", "false"); $("#soundState").textContent = "Sound unavailable";
             } finally { button.disabled = false; }
         });
-        document.addEventListener("visibilitychange", () => { if (context) sync().catch(() => {}); });
-        window.addEventListener("pagehide", () => { if (context) context.suspend().catch(() => {}); });
-        window.addEventListener("pageshow", () => { if (context && enabled) sync().catch(() => {}); });
+        listen(document, "visibilitychange", () => { if (context) sync().catch(() => {}); });
+        listen(window, "pagehide", event => {
+            clearTimeout(sleepTimer);
+            if (context) (event.persisted ? context.suspend() : context.close()).catch(() => {});
+        });
+        listen(window, "pageshow", () => { if (context && enabled) sync().catch(() => {}); });
     }
 
     const questions = [
@@ -800,9 +1058,15 @@
     ];
     function initQuiz() {
         const answers = $("#answers"), next = $("#nextButton"), form = $("#scoreForm"), restart = $("#restartQuiz");
+        const section = $("#quiz");
         let step = 0, score = 0, answered = false;
+        function eclipse(completed, finished = false) {
+            section.style.setProperty("--eclipse-rest", (.72 * (1 - completed / questions.length)).toFixed(2));
+            section.classList.toggle("is-complete", finished);
+        }
         function showQuestion(focus) {
             const q = questions[step];
+            eclipse(step);
             answered = false; next.hidden = false; next.disabled = true; restart.hidden = true; form.hidden = true;
             $("#saveStatus").textContent = ""; $("#feedback").textContent = "";
             $("#questionNumber").textContent = "Question " + pad(step + 1) + " / " + pad(questions.length);
@@ -817,6 +1081,7 @@
                 button.addEventListener("click", () => {
                     if (answered) return;
                     answered = true;
+                    eclipse(step + 1);
                     const correct = index === q.correct;
                     if (correct) score++;
                     else button.classList.add("incorrect");
@@ -835,6 +1100,7 @@
         next.addEventListener("click", () => {
             if (!answered) return;
             if (step < questions.length - 1) { step++; showQuestion(true); return; }
+            eclipse(questions.length, true);
             $("#questionNumber").textContent = "Quiz complete"; $("#question").textContent = score + " of " + questions.length + " correct.";
             answers.replaceChildren(); next.hidden = true; form.hidden = false; restart.hidden = false;
             $("#scoreInput").value = score;
@@ -867,40 +1133,102 @@
 
     document.documentElement.classList.add("enhanced");
     createOrbitMap(); positionOrbits(0);
-    initNavigation(); initSound(); initQuiz();
+    updateScroll = initNavigation(); initSound(); initQuiz();
     $("#previousWorld").addEventListener("click", () => selectWorld(selected - 1));
     $("#nextWorld").addEventListener("click", () => selectWorld(selected + 1));
     $("#portraitMode").addEventListener("click", () => setView(false));
     $("#mapMode").addEventListener("click", () => setView(true));
     $("#motionToggle").addEventListener("click", () => setMotion(!moving));
-    reducedMotion.addEventListener("change", event => setMotion(!event.matches));
-    document.addEventListener("visibilitychange", syncAnimation);
-    $("#viewport").addEventListener("pointermove", event => {
-        if (!moving || mapVisible || draggingHero || event.pointerType !== "mouse") return;
+    listen(reducedMotion, "change", event => setMotion(!event.matches));
+    listen(finePointer, "change", () => { cursor.clear(); dust.resize(); });
+    listen(forcedColors, "change", () => setMotion(moving));
+    listen($("#viewport"), "pointermove", event => {
+        if (!canDecorate() || !finePointer.matches || mapVisible || draggingHero || event.pointerType !== "mouse") return;
         const rect = event.currentTarget.getBoundingClientRect(), stage = $("#portraitStage");
         stage.style.setProperty("--look-x", ((event.clientX - rect.left) / rect.width - .5) * 7 + "px");
         stage.style.setProperty("--look-y", ((event.clientY - rect.top) / rect.height - .5) * 5 + "px");
     });
-    $("#viewport").addEventListener("pointerleave", resetParallax);
+    listen($("#viewport"), "pointerleave", resetParallax);
     bindRotation($("#portraitStage"), () => spin, value => { spin = value; if (turnHero) turnHero(spin); }, active => { draggingHero = active; });
     bindRotation($(".dossier-figure"), () => noteSpin, value => { noteSpin = value; if (turnNote) turnNote(noteSpin); });
+    const atlas = $("#main"), heroSection = $("#home");
+    const root = document.documentElement;
+    let openingTimer = 0, resizeTimer = 0;
+    if (canDecorate() && (!location.hash || location.hash === "#home")) {
+        root.classList.add("hero-opening");
+        openingTimer = setTimeout(() => root.classList.remove("hero-opening"), 800);
+    }
     selectWorld(selected, false); paintSky(); setMotion(moving);
 
+    function observe(targets, callback, options) {
+        const observer = new IntersectionObserver(callback, options);
+        targets.forEach(target => observer.observe(target));
+        observers.push(observer);
+    }
+    const sections = [heroSection, $("#missions"), $("#quiz")];
     if ("IntersectionObserver" in window) {
-        const catalogueObserver = new IntersectionObserver(entries => {
-            entries.forEach(entry => { if (entry.isIntersecting) queueCard(entry.target); });
-        }, { rootMargin: "250px 0px" });
-        cards.forEach(card => catalogueObserver.observe(card));
-        new IntersectionObserver(([entry]) => { heroVisible = entry.isIntersecting; syncAnimation(); }).observe($("#home"));
-    } else cards.forEach(queueCard);
-    let resizeTimer;
-    window.addEventListener("resize", () => {
+        observe(cards, entries => {
+            for (const entry of entries) if (entry.isIntersecting) queueCard(entry.target);
+        }, { rootMargin: "240px 0px" });
+        observe([atlas, ...sections], entries => {
+            for (const { target, isIntersecting } of entries) {
+                if (target === atlas) mainVisible = isIntersecting;
+                else target.classList.toggle("is-in-view", isIntersecting);
+                if (target === heroSection) {
+                    heroVisible = isIntersecting;
+                    if (heroVisible && !mapVisible) renderHero();
+                }
+            }
+            syncAnimation();
+        });
+        const entrances = $$(".index-toolbar, .planet-card, .mission-layout > .section-heading, .mission, .quiz-layout > *, .site-footer .shell");
+        observe(entrances, (entries, observer) => {
+            let sequence = 0;
+            for (const { target, isIntersecting } of entries) {
+                if (!isIntersecting) continue;
+                observer.unobserve(target);
+                if (!canDecorate() || document.hidden || target.contains(document.activeElement)) continue;
+                target.style.setProperty("--entry-lag", Math.min(sequence++, 3) * 42 + "ms");
+                target.classList.add("atlas-reveal");
+            }
+        }, { threshold: .07 });
+        listen(document, "animationend", event => {
+            if (event.animationName === "page-arrive") event.target.classList.remove("atlas-reveal");
+        });
+    } else {
+        sections.forEach(section => section.classList.add("is-in-view"));
+        cards.forEach(card => projectPlanet(card.querySelector("canvas"), Number(card.dataset.world)));
+    }
+    listen(window, "resize", () => {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-            paintSky();
-            if (!mapVisible) renderHero();
+            paintSky(); cursor.reset(); dust.resize(); updateScroll();
+            if (heroVisible && !mapVisible) renderHero();
             if (dialog.open) renderNote();
             cards.forEach(card => { if (!card.hidden && card.getBoundingClientRect().top < innerHeight + 250) queueCard(card); });
         }, 150);
+    });
+    function updateActivity() {
+        root.classList.toggle("page-idle", !pageActive || document.hidden);
+        if (!pageActive || document.hidden) {
+            cursor.clear(); dust.clear(); cancelIdle(cardIdle); cardIdle = 0;
+            clearTimeout(resizeTimer);
+        } else {
+            if (canDecorate()) dust.resize();
+            scheduleCard(); updateScroll();
+        }
+        syncAnimation();
+    }
+    listen(document, "visibilitychange", updateActivity);
+    listen(window, "pageshow", () => { pageActive = true; updateActivity(); });
+    listen(window, "pagehide", event => {
+        pageActive = false; updateActivity();
+        if (event.persisted) return;
+        clearTimeout(openingTimer);
+        for (const observer of observers) observer.disconnect();
+        lifetime.abort(); drawQueue.clear();
+        textureWorker?.terminate();
+        for (const job of textureJobs.values()) job.resolve();
+        textureJobs.clear();
     });
 })();
